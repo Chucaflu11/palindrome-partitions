@@ -1,6 +1,6 @@
 import React from 'react';
 import InputArea from './InputArea.jsx';
-import ImageGraph from './GraphArea.jsx';
+import GraphArea from './GraphArea.jsx';
 import { invoke } from "@tauri-apps/api/tauri";
 import "../styles/App.css";
 
@@ -23,9 +23,11 @@ function App() {
 
     return (
         <div className="app-container">
-            <InputArea />
+            <div className="input-container">
+              <InputArea />
+            </div>
             <div className="graphs-container">
-                
+                <GraphArea />
             </div>
         </div>
     );
