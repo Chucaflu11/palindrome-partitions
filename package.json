@@ -10,7 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1",
+    "@tauri-apps/api": "^1.5.6",
     "plotly.js": "^2.33.0",
     "plotly.js-dist": "^2.33.0",
     "react": "^18.2.0",

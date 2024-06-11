@@ -3,11 +3,12 @@
 
 use std::time::{Instant, Duration};
 use rand::Rng;
-use std::io::Write;
-use std::error::Error;
-use serde::{Serialize, Deserialize};
-use tauri::async_runtime;
-
+use std::io::{Write, BufWriter};
+use std::fs::File;
+use serde::Serialize;
+use tauri::{Manager, AppHandle, Runtime};
+use tokio::fs::File as AsyncFile;
+use tokio::io::{AsyncWriteExt, AsyncReadExt};
 
 #[derive(Serialize)]
 struct Data {
@@ -21,17 +22,9 @@ struct Data {
     slope_times_dp: f64,
 }
 
-async fn handle() -> Data {
-    writeln!(std::io::stdout(), "Generating data...").unwrap();
-    /*
-    WARNING: The bounds of the strings works very different on both algorithms.
-    between 100 and 300 works fine for the first algoithm, increasing them could cause long execution times.
-    The second algorithm between 100 and 300 works too fast, the data gathered is not enough to see the actual results.
-    Between 1000 and 3000 works fine for the second algorithm with not so long execution time, and enough data to see the results.
-    */
-    let lower_bound: usize = 100;
-    let upper_bound: usize = 300;
-    let content = generate_random_content(lower_bound, upper_bound);
+async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Data {
+    println!("Generating data...");
+    let content = read_or_generate_random_content(lower_bound, upper_bound).await;
 
     let mut lengths = Vec::new();
     let mut times = Vec::new();
@@ -41,9 +34,11 @@ async fn handle() -> Data {
         lengths.push(content[i].len() as f64);
         times.push(measure_time(&content[i]));
         times_dp.push(measure_time_dp(&content[i]));
+
+        app_handle.emit_all("progress", i as f64 / content.len() as f64).unwrap();
     }
 
-    let log_lengths: Vec<f64> = lengths.iter().map(|&x| x as f64).map(|x| x.ln()).collect();
+    let log_lengths: Vec<f64> = lengths.iter().map(|&x| x.ln()).collect();
     let log_times: Vec<f64> = times.iter().map(|&y| y.ln()).collect();
     let log_times_dp: Vec<f64> = times_dp.iter().map(|&y| y.ln()).collect();
 
@@ -51,21 +46,21 @@ async fn handle() -> Data {
     let slope_times_dp = calculate_slope(&log_lengths, &log_times_dp);
 
     let data = Data {
-        lengths: lengths,
-        times: times,
-        times_dp: times_dp,
-        log_lengths: log_lengths,
-        log_times: log_times,
-        log_times_dp: log_times_dp,
-        slope_times: slope_times,
-        slope_times_dp: slope_times_dp,
+        lengths,
+        times,
+        times_dp,
+        log_lengths,
+        log_times,
+        log_times_dp,
+        slope_times,
+        slope_times_dp,
     };
 
     println!("Finished");
     data
 }
 
-fn calculate_slope(x: &Vec<f64>, y: &Vec<f64>) -> f64 {
+fn calculate_slope(x: &[f64], y: &[f64]) -> f64 {
     let n = x.len() as f64;
 
     let sum_x: f64 = x.iter().sum();
@@ -180,26 +175,65 @@ fn generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String
     content
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-async fn send_data() -> Result<String, String> {
-    let data = handle().await; // Obtén los datos de la función handle
+async fn read_or_generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String> {
+    let file_path = "random_content.txt";
 
-    // Serializa la struct Data a JSON
-    match serde_json::to_string(&data) {
-        Ok(json) => {
-            println!("Serialization successful");
-            Ok(json) // Retorna el JSON como String si la serialización es exitosa
-        },
-        Err(err) => {
-            println!("Serialization error");
-            Err(err.to_string()) // Retorna el error como String en caso de fallo
+    // Intentar leer el archivo existente
+    match read_file(file_path).await {
+        Ok(content) => content,
+        Err(_) => {
+            // Si el archivo no existe, generar nuevo contenido aleatorio y guardarlo
+            let content = generate_random_content(lower_bound, upper_bound);
+            if let Err(e) = write_file(file_path, &content.join("\n")).await {
+                eprintln!("Error writing file: {}", e);
+            }
+            content
         }
     }
 }
 
-fn main() {
+async fn write_file(file_path: &str, content: &str) -> Result<(), String> {
+    let mut file = AsyncFile::create(file_path).await.map_err(|e| e.to_string())?;
+    file.write_all(content.as_bytes()).await.map_err(|e| e.to_string())?;
+    Ok(())
+}
 
+async fn read_file(file_path: &str) -> Result<Vec<String>, String> {
+    let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
+    let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
+    Ok(lines)
+}
+
+#[tauri::command]
+fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
+    let content = generate_random_content(lower_bound, upper_bound);
+
+    let file_path = "random_content.txt";
+    let file = std::fs::File::create(file_path).map_err(|e| e.to_string())?;
+    let mut writer = BufWriter::new(file);
+
+    for line in content {
+        writeln!(writer, "{}", line).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: String, upper_bound: String) -> Result<String, String> {
+    // Convertir los parámetros a usize
+    let lower_bound = lower_bound.parse::<usize>().map_err(|e| e.to_string())?;
+    let upper_bound = upper_bound.parse::<usize>().map_err(|e| e.to_string())?;
+
+    let data = handle(app_handle, lower_bound, upper_bound).await; // Obtén los datos de la función handle
+
+    // Serializa la struct Data a JSON
+    serde_json::to_string(&data).map_err(|e| e.to_string())
+}
+
+fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![send_data])
         .run(tauri::generate_context!())
