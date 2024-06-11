@@ -4,11 +4,10 @@
 use std::time::{Instant, Duration};
 use rand::Rng;
 use std::io::{Write, BufWriter};
-use std::fs::File;
 use serde::Serialize;
 use tauri::{Manager, AppHandle, Runtime};
 use tokio::fs::File as AsyncFile;
-use tokio::io::{AsyncWriteExt, AsyncReadExt};
+use tokio::io::{AsyncReadExt};
 
 #[derive(Serialize)]
 struct Data {
@@ -198,21 +197,6 @@ fn generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String
 }
 
 #[tauri::command]
-async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> Result<Vec<String>, String> {
-    if !std::path::Path::new(file_path).exists() {
-        generate_file(lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
-    }
-
-    // Leer el archivo
-    let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
-    let mut content = String::new();
-    file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
-    let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
-
-    Ok(lines)
-}
-
-#[tauri::command]
 async fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
     let content = generate_random_content(lower_bound, upper_bound);
 
@@ -225,6 +209,21 @@ async fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), Str
     }
 
     Ok(())
+}
+
+#[tauri::command]
+async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> Result<Vec<String>, String> {
+    if !std::path::Path::new(file_path).exists() {
+        generate_file(lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
+    }
+
+    // Leer el archivo
+    let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
+    let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
+
+    Ok(lines)
 }
 
 #[tauri::command]
