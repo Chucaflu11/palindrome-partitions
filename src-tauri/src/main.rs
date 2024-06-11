@@ -22,20 +22,42 @@ struct Data {
     slope_times_dp: f64,
 }
 
+impl Default for Data {
+    fn default() -> Self {
+        Data {
+            lengths: Vec::new(),
+            times: Vec::new(),
+            times_dp: Vec::new(),
+            log_lengths: Vec::new(),
+            log_times: Vec::new(),
+            log_times_dp: Vec::new(),
+            slope_times: 0.0,
+            slope_times_dp: 0.0,
+        }
+    }
+}
+
 async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Data {
     println!("Generating data...");
-    let content = read_or_generate_random_content(lower_bound, upper_bound).await;
+    let content = match read_file("../public/random_content.txt", lower_bound, upper_bound).await {
+        Ok(content) => content,
+        Err(err) => {
+            eprintln!("Error reading file: {}", err);
+            return Data::default(); // Return a default value for Data
+        }
+    };
 
+    println!("{}", content.len());
     let mut lengths = Vec::new();
     let mut times = Vec::new();
     let mut times_dp = Vec::new();
 
-    for i in 0..(content.len()) {
+    for i in 0..content.len() {
         lengths.push(content[i].len() as f64);
         times.push(measure_time(&content[i]));
         times_dp.push(measure_time_dp(&content[i]));
 
-        app_handle.emit_all("progress", i as f64 / content.len() as f64).unwrap();
+        app_handle.emit_all("progress", i as f64 / (content.len() - 1) as f64).unwrap();
     }
 
     let log_lengths: Vec<f64> = lengths.iter().map(|&x| x.ln()).collect();
@@ -175,42 +197,26 @@ fn generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String
     content
 }
 
-async fn read_or_generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String> {
-    let file_path = "random_content.txt";
-
-    // Intentar leer el archivo existente
-    match read_file(file_path).await {
-        Ok(content) => content,
-        Err(_) => {
-            // Si el archivo no existe, generar nuevo contenido aleatorio y guardarlo
-            let content = generate_random_content(lower_bound, upper_bound);
-            if let Err(e) = write_file(file_path, &content.join("\n")).await {
-                eprintln!("Error writing file: {}", e);
-            }
-            content
-        }
+#[tauri::command]
+async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> Result<Vec<String>, String> {
+    if !std::path::Path::new(file_path).exists() {
+        generate_file(lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
     }
-}
 
-async fn write_file(file_path: &str, content: &str) -> Result<(), String> {
-    let mut file = AsyncFile::create(file_path).await.map_err(|e| e.to_string())?;
-    file.write_all(content.as_bytes()).await.map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-async fn read_file(file_path: &str) -> Result<Vec<String>, String> {
+    // Leer el archivo
     let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
     let mut content = String::new();
     file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
     let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
+
     Ok(lines)
 }
 
 #[tauri::command]
-fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
+async fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
     let content = generate_random_content(lower_bound, upper_bound);
 
-    let file_path = "random_content.txt";
+    let file_path = "../public/random_content.txt";
     let file = std::fs::File::create(file_path).map_err(|e| e.to_string())?;
     let mut writer = BufWriter::new(file);
 
@@ -222,10 +228,7 @@ fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: String, upper_bound: String) -> Result<String, String> {
-    // Convertir los parámetros a usize
-    let lower_bound = lower_bound.parse::<usize>().map_err(|e| e.to_string())?;
-    let upper_bound = upper_bound.parse::<usize>().map_err(|e| e.to_string())?;
+async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Result<String, String> {
 
     let data = handle(app_handle, lower_bound, upper_bound).await; // Obtén los datos de la función handle
 
@@ -235,7 +238,7 @@ async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: String, up
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![send_data])
+        .invoke_handler(tauri::generate_handler![generate_file, send_data, read_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
