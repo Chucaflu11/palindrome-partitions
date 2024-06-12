@@ -1,6 +1,14 @@
 .graph-grid {
+  margin-top: 20px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-gap: 10px;
 }
 
+.progress-bar-empty {
+    width: 90%; 
+    background: #b6b4ed;
+    margin: 20px;
+    margin-top: 10px;
+    border-radius: 5px; 
+};

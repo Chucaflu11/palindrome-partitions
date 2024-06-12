@@ -7,7 +7,7 @@ use std::io::{Write, BufWriter};
 use serde::Serialize;
 use tauri::{Manager, AppHandle, Runtime};
 use tokio::fs::File as AsyncFile;
-use tokio::io::{AsyncReadExt};
+use tokio::io::AsyncReadExt;
 
 #[derive(Serialize)]
 struct Data {
@@ -37,16 +37,14 @@ impl Default for Data {
 }
 
 async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Data {
-    println!("Generating data...");
     let content = match read_file("../public/random_content.txt", lower_bound, upper_bound).await {
         Ok(content) => content,
         Err(err) => {
             eprintln!("Error reading file: {}", err);
-            return Data::default(); // Return a default value for Data
+            return Data::default();
         }
     };
 
-    println!("{}", content.len());
     let mut lengths = Vec::new();
     let mut times = Vec::new();
     let mut times_dp = Vec::new();
@@ -77,7 +75,6 @@ async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_
         slope_times_dp,
     };
 
-    println!("Finished");
     data
 }
 
@@ -186,13 +183,11 @@ fn generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String
     let mut rng = rand::thread_rng();
     let mut content = Vec::new();
 
-    // Generar y escribir cadenas aleatorias en el contenido
     for length in lower_bound..upper_bound {
         let s: String = (0..length).map(|_| rng.gen_range('a'..'z')).collect();
         content.push(s);
     }
 
-    // Retornar el contenido como una cadena de texto
     content
 }
 
@@ -217,7 +212,6 @@ async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> R
         generate_file(lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
     }
 
-    // Leer el archivo
     let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
     let mut content = String::new();
     file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
@@ -229,9 +223,9 @@ async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> R
 #[tauri::command]
 async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Result<String, String> {
 
-    let data = handle(app_handle, lower_bound, upper_bound).await; // Obtén los datos de la función handle
+    let data = handle(app_handle, lower_bound, upper_bound).await;
 
-    // Serializa la struct Data a JSON
+    // struct Data to JSON
     serde_json::to_string(&data).map_err(|e| e.to_string())
 }
 

@@ -1,18 +1,133 @@
 .input-area {
     display: flex;
     flex-direction: column;
+    color: white;
+    border: 1px solid #d0d0f5;
+    border-radius: 5px;
 }
 
+.info-text {
+    color: #5b4860;
+    margin-left: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.input-button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 10px;
+    font-weight: bold;
+}
+
+.input-group input {
+    box-sizing: border-box;
+    background-color: #6e5774;
+    color: white;
+    border-radius: 5px;
+    border: 1px solid #6e5774;
+    margin-top: 10px;
+    width: 90px;
+    height: 30px;
+}
+
+.input-group input:focus {
+    background-color: #6e5774;
+    border-color: white;
+    outline: none;
+}
+
+.data-button-container {
+    display: flex;
+    flex-direction: row;
+    
+}
+
+.data-button-container button {
+    color: white;
+    background-color: #6d51b1;
+    border-radius: 10px;
+    border: none;
+    height: 30px;
+    width: 150px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.data-button-container button:hover {
+    background-color: #8d7bd9;
+}
+
+.output-box::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.output-box::-webkit-scrollbar-track {
+    border-radius: 8px;
+    background-color: #e5e5fa;
+    border: 1px solid #cacaca;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+}
+
+.output-box::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background-color: #9e95e4;
+}
+
+
 .output-box {
+    border: 1px solid #b6b4ed;
+    border-radius: 5px;
     white-space: pre-wrap;
-    margin-top: 20px;
-    height: 300px;
+    height: 150px;
     overflow-y: scroll;
     overflow-x: scroll;
     width: 300px;
     color: white;
+    align-self: center;
+    padding: 5px;
 }
+
+.output-box-text {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-right: 20px;
+    text-decoration: underline;
+    margin-left: 20px;
+    font-weight: bold;
+}
+
+.output-box-text button {
+    background-image: url(../../src-tauri/icons/copy.svg);
+    background-repeat: no-repeat;
+    background-position: center; /* Opcional: centrar el ícono */
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.output-box-text button:hover {
+    background-color: #bfacc6;
+}
+
 .description {
+    color: #866b8e;
+    margin: 10px;
+    
+}
+
+.description p {
+    margin: 5px;
+}
+
+.formatted-text {
+    font-size: 14px;
+    font-style: italic;
     color: white;
-    margin-top: 20px;
 }

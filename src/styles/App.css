@@ -1,6 +1,6 @@
 :root {
-  color: #0f0f0f;
-  background-color: #000000;
+  background: #18181b;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
 .app-container {
@@ -14,8 +14,11 @@
 }
 
 .input-container {
+  background: #27272a;
   display: flex;
   width: 350px;
+  height: 100%;
+  border-radius: 10px;
 }
 
 .graphs-container {

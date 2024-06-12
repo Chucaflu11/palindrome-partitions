@@ -46,44 +46,91 @@ function InputArea({ onDataLoaded }) {
       }
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(outputText).then(() => {
+        console.log('Text copied to clipboard');
+    }).catch((error) => {
+        console.error('Error copying text:', error.message);
+    });
+};
+
     return (
       <div className="input-area">
-        <div className="input-group">
-          <label htmlFor="input1">Etiqueta 1:</label>
-          <input 
-            type="text" 
-            id="input1"
-            value={inputText1} 
-            onChange={(e) => setInputText1(e.target.value)} 
-          />
-        </div>
-        <div className="input-group">
-          <label htmlFor="input2">Etiqueta 2:</label>
-          <input 
-            type="text" 
-            id="input2"
-            value={inputText2} 
-            onChange={(e) => setInputText2(e.target.value)} 
-          />
-        </div>
-          <button onClick={() => handleGenerateFile(inputText1, inputText2)}>Generate File</button>
-          <button onClick={() => loadData(inputText1, inputText2)}>Load Data</button>
-          <div className="output-box">
-              {outputText}
+        <div className="input-button-container">
+          <div className="input-group">
+            <label htmlFor="input1"> Límite inferior:</label>
+            <input
+              type="text"
+              id="input1"
+              value={inputText1}
+              onChange={(e) => setInputText1(e.target.value)}
+            />
           </div>
+          <div className="input-group">
+            <label htmlFor="input2">Límite superior:</label>
+            <input
+              type="text"
+              id="input2"
+              value={inputText2}
+              onChange={(e) => setInputText2(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className='info-text'> *Límites propuestos para un equilibrio entre tiempo y resultados</p>
+        <div className="data-button-container">
+          <button className="generate-file-button" onClick={() => handleGenerateFile(inputText1, inputText2)}>Generar Archivo</button>
+          <button className="load-data-button" onClick={() => loadData(inputText1, inputText2)}>Cargar Datos</button>
+        </div>
+        <div className="output-box-text">
+          <p>Texto utilizado: </p>
+          <button className="copy-button" onClick={copyToClipboard}></button>
+        </div>
+        <div className="output-box">
+          {outputText}
+        </div>
 
-          <div className='description'>
-            <p>
+        <div className='description'>
+          <p>
             {data ? (
               <>
-                Pendiente de la escala logarítmica del algoritmo 1: {data.slope_times}<br />
-                Pendiente de la escala logarítmica del algoritmo 2: {data.slope_times_dp}
+                <span className="formatted-text">Pendiente de la escala logarítmica del algoritmo 1:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times}<br />
+                <span className="formatted-text">Pendiente de la escala logarítmica del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
               </>
             ) : (
               'Pendientes: -' 
             )}
           </p>
-          </div>
+          <p>
+            {data ? (
+              <>
+                <span className="formatted-text">Tiempo promedio del algoritmo 1:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times}<br />
+                <span className="formatted-text">Tiempo promedio del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+              </>
+            ) : (
+              'Promedios: -' 
+            )}
+          </p>
+          <p>
+            {data ? (
+              <>
+                <span className="formatted-text">Tiempo máximo del algoritmo 1:<br /> - </span>&nbsp;&nbsp;&nbsp;{data.slope_times}<br />
+                <span className="formatted-text">Tiempo mínimo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+              </>
+            ) : (
+              'Tiempos: -' 
+            )}
+          </p>
+          <p>
+            {data ? (
+              <>
+                <span className="formatted-text">Tiempo máximo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times}<br />
+                <span className="formatted-text">Tiempo mínimo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+              </>
+            ) : (
+              'Tiempos: -' 
+            )}
+          </p>
+        </div>
       </div>
     );
 }
