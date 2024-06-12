@@ -37,9 +37,9 @@ function InputArea({ onDataLoaded }) {
     const handleGenerateFile = async (inputText1, inputText2) => {
       const lowerBound = parseInt(inputText1);
       const upperBound = parseInt(inputText2);
-      readFromFile();
       try {
           await invoke('generate_file', { lowerBound: lowerBound, upperBound: upperBound });
+          readFromFile();
           console.log('File generated successfully');
       } catch (error) {
           console.error('Error generating file:', error);
@@ -103,8 +103,8 @@ function InputArea({ onDataLoaded }) {
           <p>
             {data ? (
               <>
-                <span className="formatted-text">Tiempo promedio del algoritmo 1:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times}<br />
-                <span className="formatted-text">Tiempo promedio del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+                <span className="formatted-text">Tiempo promedio del algoritmo 1 (s):<br /> - </span> &nbsp;&nbsp;&nbsp;{data.mean_times}<br />
+                <span className="formatted-text">Tiempo promedio del algoritmo 2 (s):<br /> - </span> &nbsp;&nbsp;&nbsp;{data.mean_times_dp}
               </>
             ) : (
               'Promedios: -' 
@@ -113,8 +113,8 @@ function InputArea({ onDataLoaded }) {
           <p>
             {data ? (
               <>
-                <span className="formatted-text">Tiempo máximo del algoritmo 1:<br /> - </span>&nbsp;&nbsp;&nbsp;{data.slope_times}<br />
-                <span className="formatted-text">Tiempo mínimo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+                <span className="formatted-text">Tiempo máximo del algoritmo 1 (s):<br /> - </span>&nbsp;&nbsp;&nbsp;{data.max_times}<br />
+                <span className="formatted-text">Tiempo mínimo del algoritmo 2 (s):<br /> - </span> &nbsp;&nbsp;&nbsp;{data.min_times}
               </>
             ) : (
               'Tiempos: -' 
@@ -123,8 +123,8 @@ function InputArea({ onDataLoaded }) {
           <p>
             {data ? (
               <>
-                <span className="formatted-text">Tiempo máximo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times}<br />
-                <span className="formatted-text">Tiempo mínimo del algoritmo 2:<br /> - </span> &nbsp;&nbsp;&nbsp;{data.slope_times_dp}
+                <span className="formatted-text">Tiempo máximo del algoritmo 2 (s):<br /> - </span> &nbsp;&nbsp;&nbsp;{data.max_times_dp}<br />
+                <span className="formatted-text">Tiempo mínimo del algoritmo 2 (s):<br /> - </span> &nbsp;&nbsp;&nbsp;{data.min_times_dp}
               </>
             ) : (
               'Tiempos: -' 

@@ -19,6 +19,12 @@ struct Data {
     log_times_dp: Vec<f64>,
     slope_times: f64,
     slope_times_dp: f64,
+    mean_times: f64,
+    mean_times_dp: f64,
+    max_times: f64,
+    max_times_dp: f64,
+    min_times: f64,
+    min_times_dp: f64,
 }
 
 impl Default for Data {
@@ -32,6 +38,12 @@ impl Default for Data {
             log_times_dp: Vec::new(),
             slope_times: 0.0,
             slope_times_dp: 0.0,
+            mean_times: 0.0,
+            mean_times_dp: 0.0,
+            max_times: 0.0,
+            max_times_dp: 0.0,
+            min_times: 0.0,
+            min_times_dp: 0.0,
         }
     }
 }
@@ -64,6 +76,15 @@ async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_
     let slope_times = calculate_slope(&log_lengths, &log_times);
     let slope_times_dp = calculate_slope(&log_lengths, &log_times_dp);
 
+    let mean_times = calculate_mean(&times);
+    let mean_times_dp = calculate_mean(&times_dp);
+
+    let max_times = calculate_max(&times);
+    let max_times_dp = calculate_max(&times_dp);
+
+    let min_times = calculate_min(&times);
+    let min_times_dp = calculate_min(&times_dp);
+
     let data = Data {
         lengths,
         times,
@@ -73,9 +94,29 @@ async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_
         log_times_dp,
         slope_times,
         slope_times_dp,
+        mean_times,
+        mean_times_dp,
+        max_times,
+        max_times_dp,
+        min_times,
+        min_times_dp,
     };
 
     data
+}
+
+fn calculate_mean(data: &[f64]) -> f64 {
+    let sum: f64 = data.iter().sum();
+    let count = data.len() as f64;
+    sum / count
+}
+
+fn calculate_max(data: &[f64]) -> f64 {
+    *data.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()
+}
+
+fn calculate_min(data: &[f64]) -> f64 {
+    *data.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()
 }
 
 fn calculate_slope(x: &[f64], y: &[f64]) -> f64 {
