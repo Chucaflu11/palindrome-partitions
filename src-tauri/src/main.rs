@@ -148,8 +148,8 @@ fn measure_time_dp(s: &str) -> f64 {
 
 // O(n^3)
 fn min_palindrome_partitions(s: &str) -> usize {
-    let s: Vec<char> = s.chars().collect();
     let n = s.len();
+    let s_bytes = s.as_bytes();
     let mut c = vec![vec![0; n]; n];
     let mut p = vec![vec![false; n]; n];
 
@@ -158,24 +158,19 @@ fn min_palindrome_partitions(s: &str) -> usize {
     }
 
     for l in 2..=n {
-        for i in 0..n - l + 1 {
+        for i in 0..=n - l {
             let j = i + l - 1;
-            if l == 2 {
-                p[i][j] = s[i] == s[j];
+            p[i][j] = if l == 2 {
+                s_bytes[i] == s_bytes[j]
             } else {
-                p[i][j] = s[i] == s[j] && p[i + 1][j - 1];
-            }
+                s_bytes[i] == s_bytes[j] && p[i + 1][j - 1]
+            };
 
-            if p[i][j] {
-                c[i][j] = 0;
+            c[i][j] = if p[i][j] {
+                0
             } else {
-                c[i][j] = usize::MAX;
-                for k in i..j {
-                    if c[i][j] > c[i][k] + c[k + 1][j] + 1 {
-                        c[i][j] = c[i][k] + c[k + 1][j] + 1;
-                    }
-                }
-            }
+                (i..j).fold(usize::MAX, |acc, k| acc.min(c[i][k] + c[k + 1][j] + 1))
+            };
         }
     }
 
@@ -184,9 +179,9 @@ fn min_palindrome_partitions(s: &str) -> usize {
 
 // O(n^2)
 fn min_palindrome_partitions_dp(s: &str) -> usize {
-    let s: Vec<char> = s.chars().collect();
+    let s_bytes = s.as_bytes();
     let n = s.len();
-    let mut min_cut_dp = vec![0; n];
+    let mut min_cut_dp = vec![usize::MAX; n];
     let mut p = vec![vec![false; n]; n];
 
     for i in 0..n {
@@ -196,11 +191,11 @@ fn min_palindrome_partitions_dp(s: &str) -> usize {
     for l in 2..=n {
         for i in 0..n - l + 1 {
             let j = i + l - 1;
-            if l == 2 {
-                p[i][j] = s[i] == s[j];
+            p[i][j] = if l == 2 {
+                s_bytes[i] == s_bytes[j]
             } else {
-                p[i][j] = s[i] == s[j] && p[i + 1][j - 1];
-            }
+                s_bytes[i] == s_bytes[j] && p[i + 1][j - 1]
+            };
         }
     }
 
@@ -208,7 +203,6 @@ fn min_palindrome_partitions_dp(s: &str) -> usize {
         if p[0][i] {
             min_cut_dp[i] = 0;
         } else {
-            min_cut_dp[i] = usize::MAX;
             for j in 0..i {
                 if p[j + 1][i] && 1 + min_cut_dp[j] < min_cut_dp[i] {
                     min_cut_dp[i] = 1 + min_cut_dp[j];
