@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import InputArea from './InputArea.jsx';
 import GraphArea from './GraphArea.jsx';
-import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from '@tauri-apps/api/event';
 import "../styles/App.css";
 
 function App() {

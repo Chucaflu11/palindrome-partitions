@@ -2,6 +2,10 @@
   background: #18181b;
   font-family: Helvetica, Arial, sans-serif;
 }
+:body {
+  background: #18181b;
+  font-family: Helvetica, Arial, sans-serif;
+}
 
 .app-container {
   height: 100%;

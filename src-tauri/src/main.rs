@@ -5,7 +5,7 @@ use std::time::{Instant, Duration};
 use rand::Rng;
 use std::io::{Write, BufWriter};
 use serde::Serialize;
-use tauri::{Manager, AppHandle, Runtime};
+use tauri::{Manager, AppHandle};
 use tokio::fs::File as AsyncFile;
 use tokio::io::AsyncReadExt;
 
@@ -48,8 +48,9 @@ impl Default for Data {
     }
 }
 
-async fn handle<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Data {
-    let content = match read_file("../public/random_content.txt", lower_bound, upper_bound).await {
+async fn handle(app_handle: AppHandle, lower_bound: usize, upper_bound: usize) -> Data {
+    let app_handle_clone = app_handle.clone();
+    let content = match read_file(app_handle_clone, "../public/random_content.txt", lower_bound, upper_bound).await {
         Ok(content) => content,
         Err(err) => {
             eprintln!("Error reading file: {}", err);
@@ -227,11 +228,16 @@ fn generate_random_content(lower_bound: usize, upper_bound: usize) -> Vec<String
 }
 
 #[tauri::command]
-async fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), String> {
+async fn generate_file(handle: tauri::AppHandle, lower_bound: usize, upper_bound: usize) -> Result<(), String> {
     let content = generate_random_content(lower_bound, upper_bound);
 
-    let file_path = "../public/random_content.txt";
-    let file = std::fs::File::create(file_path).map_err(|e| e.to_string())?;
+    let resource_path = handle.path_resolver()
+      .resolve_resource("../public/random_content.txt")
+      .expect("failed to resolve resource");
+
+    //let file = std::fs::File::open(&resource_path).unwrap();
+
+    let file = std::fs::File::create(&resource_path).map_err(|e| e.to_string())?;
     let mut writer = BufWriter::new(file);
 
     for line in content {
@@ -242,12 +248,16 @@ async fn generate_file(lower_bound: usize, upper_bound: usize) -> Result<(), Str
 }
 
 #[tauri::command]
-async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> Result<Vec<String>, String> {
-    if !std::path::Path::new(file_path).exists() {
-        generate_file(lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
+async fn read_file(handle: tauri::AppHandle, file_path: &str, lower_bound: usize, upper_bound: usize) -> Result<Vec<String>, String> {
+    let resource_path = handle.path_resolver()
+      .resolve_resource(file_path)
+      .expect("failed to resolve resource");
+
+    if !std::path::Path::new(&resource_path).exists() {
+        generate_file(handle, lower_bound, upper_bound).await.map_err(|e| e.to_string())?;
     }
 
-    let mut file = AsyncFile::open(file_path).await.map_err(|e| e.to_string())?;
+    let mut file = AsyncFile::open(&resource_path).await.map_err(|e| e.to_string())?;
     let mut content = String::new();
     file.read_to_string(&mut content).await.map_err(|e| e.to_string())?;
     let lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
@@ -256,7 +266,7 @@ async fn read_file(file_path: &str, lower_bound: usize, upper_bound: usize) -> R
 }
 
 #[tauri::command]
-async fn send_data<R: Runtime>(app_handle: AppHandle<R>, lower_bound: usize, upper_bound: usize) -> Result<String, String> {
+async fn send_data(app_handle: AppHandle, lower_bound: usize, upper_bound: usize) -> Result<String, String> {
 
     let data = handle(app_handle, lower_bound, upper_bound).await;
 
