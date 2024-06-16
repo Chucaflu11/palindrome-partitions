@@ -132,10 +132,10 @@ fn calculate_slope(x: &[f64], y: &[f64]) -> f64 {
 }
 
 fn measure_time(s: &str) -> f64 {
-    let start = Instant::now(); // Record the starting time
-    min_palindrome_partitions(s); // Call the function to measure
-    let duration: Duration = start.elapsed(); // Calculate elapsed time
-    duration.as_secs_f64() // Return time in seconds as f64
+    let start = Instant::now();
+    min_palindrome_partitions(s);
+    let duration: Duration = start.elapsed();
+    duration.as_secs_f64()
 }
 
 fn measure_time_dp(s: &str) -> f64 {
@@ -234,8 +234,6 @@ async fn generate_file(handle: tauri::AppHandle, lower_bound: usize, upper_bound
     let resource_path = handle.path_resolver()
       .resolve_resource("../public/random_content.txt")
       .expect("failed to resolve resource");
-
-    //let file = std::fs::File::open(&resource_path).unwrap();
 
     let file = std::fs::File::create(&resource_path).map_err(|e| e.to_string())?;
     let mut writer = BufWriter::new(file);

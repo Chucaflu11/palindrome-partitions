@@ -3,8 +3,8 @@ import { invoke } from "@tauri-apps/api/tauri";
 import "../styles/InputArea.css";
 
 function InputArea({ onDataLoaded }) {
-    const [inputText1, setInputText1] = useState('100');
-    const [inputText2, setInputText2] = useState('300');
+    const [inputText1, setInputText1] = useState('500');
+    const [inputText2, setInputText2] = useState('800');
     const [outputText, setOutputText] = useState('');
 
 
